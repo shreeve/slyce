@@ -38,6 +38,19 @@ class Mysql2::Client
   end
 end
 
+def display(name, data, show, uniq, tots)
+  seen = data.inject(0) {|seen, coun| seen += coun[0] }
+  wide = tots.to_s.size
+  fill = " " * wide
+  line = "=" * name.size
+
+  puts "\n#{fill} #{name}\n#{fill} #{line}\n"
+  data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
+  puts "#{fill} -----\n"
+  puts "%*d shown (top #{show})" % [wide, seen] if show
+  puts "%*d total (all #{uniq})" % [wide, tots]
+end
+
 # ==[ Let 'er rip! ]==
 
 conn = Mysql2::Client.new(database: dbas, as: :array)
