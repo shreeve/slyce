@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = "slyce"
-  s.version     = `grep '^VERSION' bin/slyce.rb | cut -f 2 -d '='`
+  s.version     = `grep '^VERSION' bin/slyce | cut -f 2 -d '"'`
   s.author      = "Steve Shreeve"
   s.email       = "steve.shreeve@gmail.com"
   s.summary     =
