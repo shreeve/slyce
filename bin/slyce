@@ -14,12 +14,17 @@ tabl = nil
 OptionParser.new.instance_eval do
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
-  on "-c", "--columns", "Display column names and quit"
-  on "-h", "--help"   , "Show help and command usage" do Kernel.abort to_s; end
-  on "-v", "--version", "Show version number" do Kernel.abort "#{program_name} #{VERSION}"; end
+  on "-c", "--columns"                , "Display column names and quit"
+  on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
+  on "-s", "--show <count>"           , "Show this many values", Integer
+  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{VERSION}"; end
+  on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
 
   self
 end.parse!(into: opts={}) rescue abort($!.message)
+
+show = opts[:show]
+keep = opts[:extract].to_s.downcase.split(",")
 
 dbas ||= ARGV.shift or Kernel.abort "no database given"
 tabl ||= ARGV.shift or Kernel.abort "no table given"
