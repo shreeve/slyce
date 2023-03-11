@@ -9,7 +9,7 @@
 #   wget https://github.com/nalgeon/sqlean/releases/download/0.19.3/sqlean-macos-arm64.zip
 #   unzip sqlean-macos-arm64.zip regexp.dylib
 
-VERSION="0.9.5"
+VERSION="0.9.7"
 
 STDOUT.sync = true
 
@@ -84,6 +84,10 @@ want = want.empty? ? cols : want & cols
 if opts[:columns]
   puts cols
   exit
+end
+
+if want.empty?
+  abort "no columns are selected"
 end
 
 want.each do |name|
