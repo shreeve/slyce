@@ -52,8 +52,8 @@ def display(name, data, show, uniq, tots)
   puts "\n#{fill} #{name}\n#{fill} #{line}\n"
   data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
   puts "#{fill} -----\n"
-  puts "%*d shown (top #{rows})" % [wide, rows] if show
-  puts "%*d total (all #{uniq})" % [wide, tots]
+  puts "%*d shown (top %d)" % [wide, rows, rows] if show
+  puts "%*d total (all %d)" % [wide, tots, uniq]
 end
 
 # ==[ Let 'er rip! ]==
