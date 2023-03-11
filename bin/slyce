@@ -56,8 +56,40 @@ end
 conn = Mysql2::Client.new(database: dbas, as: :array)
 resu = conn.query("select * from `#{tabl}` limit 0")
 cols = resu.fields
+keep = keep.empty? ? cols : keep & cols
 
 if opts[:columns]
   puts cols
   exit
+end
+
+keep.each do |name|
+
+  # data summary
+  stmt = show ? "limit #{show}" : ""
+  data = conn.query(<<~"" + stmt).to_a
+    select
+      count(*) as cnt,
+      `#{name}` as val
+    from
+      `#{tabl}`
+    group by
+      val
+    order by
+      cnt desc
+
+  uniq = conn.query(<<~"").to_a[0][0]
+    select
+      count(distinct(`#{name}`))
+    from
+      `#{tabl}`
+
+  tots = conn.query(<<~"").to_a[0][0]
+    select
+      count(`#{name}`)
+    from
+      `#{tabl}`
+
+  display(name, data, show, uniq, tots)
+
 end
