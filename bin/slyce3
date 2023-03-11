@@ -9,7 +9,7 @@
 #   wget https://github.com/nalgeon/sqlean/releases/download/0.19.3/sqlean-macos-arm64.zip
 #   unzip sqlean-macos-arm64.zip regexp.dylib
 
-VERSION="0.9.7"
+VERSION="0.9.8"
 
 STDOUT.sync = true
 
