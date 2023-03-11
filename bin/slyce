@@ -2,7 +2,7 @@
 
 STDOUT.sync = true
 
-VERSION="0.5.1"
+VERSION="0.5.2"
 
 require "bundler/setup"
 require "mysql2"
@@ -42,6 +42,7 @@ end
 
 def display(name, data, show, uniq, tots)
   seen = data.inject(0) {|seen, coun| seen += coun[0] }
+  rows = [data.size, seen].min
   wide = tots.to_s.size
   fill = " " * wide
   line = "=" * name.size
@@ -49,7 +50,7 @@ def display(name, data, show, uniq, tots)
   puts "\n#{fill} #{name}\n#{fill} #{line}\n"
   data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
   puts "#{fill} -----\n"
-  puts "%*d shown (top #{show})" % [wide, seen] if show
+  puts "%*d shown (top #{rows})" % [wide, rows] if show
   puts "%*d total (all #{uniq})" % [wide, tots]
 end
 
@@ -82,7 +83,7 @@ keep.each do |name|
 
   uniq = conn.query(<<~"").to_a[0][0]
     select
-      count(distinct(`#{name}`))
+      count(distinct(ifnull(`#{name}`,0)))
     from
       `#{tabl}`
 
