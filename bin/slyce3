@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+
+# NOTE: Requires the 'regexp' sqlite3 extension from https://github.com/nalgeon/sqlean
+
+VERSION="0.9.5"
+
+STDOUT.sync = true
+
+require "extralite"
+require "optparse"
+
+trap("INT" ) { abort "\n" }
+
+dbas = nil
+tabl = nil
+
+OptionParser.new.instance_eval do
+  @banner  = "usage: #{program_name} [options] <database> <table>"
+
+  on "-a", "--alpha"                  , "Sort alphabetically, not numerically"
+  on "-c", "--columns"                , "Display column names and quit"
+  on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
+  on "-r", "--regexp <path>"          , "Path to the sqlean/regexp extension"
+  on "-s", "--show <count>"           , "Show this many values", Integer
+  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{VERSION}"; end
+  on "-w", "--where <cond>"           , "Filter rows (eg - 'age=33,Name=/[BW]ill/i,color=\"\"'"
+  on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
+
+  self
+end.parse!(into: opts={regexp: "regexp"}) rescue abort($!.message)
+
+abcd = opts[:alpha]
+filt = opts[:where] and filt = "where\n  #{filt}"
+regx = opts[:regexp]; File.exist?(regx) or abort "no regexp extension found at '#{regx}'"
+show = opts[:show]
+want = opts[:extract].to_s.downcase.split(",")
+
+dbas ||= ARGV.shift or abort "no database given"
+tabl ||= ARGV.shift or abort "no table given"
+
+# ==[ Helpers ]==
+
+class Extralite::Database
+  def sql(...)
+    query_ary(...)
+  end
+
+  def sql!(stmt, *args, **, &)
+    puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
+    sql(stmt, *args, **, &)
+  end
+end
+
+def display(name, data, show, uniq, tots)
+  seen = data.inject(0) {|seen, coun| seen += coun[0] }
+  rows = [data.size, seen].min
+  wide = tots.to_s.size
+  fill = " " * wide
+  line = "=" * name.size
+
+  puts "\n#{fill} #{name}\n#{fill} #{line}\n"
+  data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
+  puts "#{fill} -----\n"
+  puts "%*d shown (top %d)" % [wide, rows, rows] if show
+  puts "%*d total (all %d)" % [wide, tots, uniq]
+end
+
+# ==[ Let 'er rip! ]==
+
+conn = Extralite::Database.new(dbas)
+resu = conn.load_extension(regx)
+cols = conn.columns("select * from `#{tabl}` limit 0").map(&:to_s)
+want = want.empty? ? cols : want & cols
+
+if opts[:columns]
+  puts cols
+  exit
+end
+
+want.each do |name|
+  sort = abcd ? "" : "cnt desc,"
+  stmt = show ? "limit #{show}" : ""
+  data = conn.sql(<<~"" + stmt).to_a
+    select
+      count(*) as cnt,
+      `#{name}` as val
+    from
+      `#{tabl}`
+    #{filt}
+    group by
+      val
+    order by #{sort}
+      -iif(regexp_like(`#{name}`, '^[-+]?((0|([1-9]\\d*)(\\.\\d*)?)|((0|([1-9]\\d*))\\.\\d+))$'), `#{name}` + 0, null) desc,
+      -iif(regexp_like(`#{name}`, '^0\\d+$'), length(`#{name}`), null) desc,
+      -iif(regexp_like(`#{name}`, '^\\d'), length(regexp_substr(`#{name}`, '^\\d+')), null) desc,
+      `#{name}` is null, `#{name}`
+    collate nocase
+
+  uniq = conn.sql(<<~"").to_a[0][0]
+    select
+      count(distinct(ifnull(`#{name}`,0)))
+    from
+      `#{tabl}`
+    #{filt}
+
+  tots = conn.sql(<<~"").to_a[0][0]
+    select
+      count(ifnull(`#{name}`,0))
+    from
+      `#{tabl}`
+    #{filt}
+
+  display(name, data, show, uniq, tots)
+end
