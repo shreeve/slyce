@@ -2,7 +2,7 @@
 
 STDOUT.sync = true
 
-VERSION="0.0.2"
+VERSION="0.5.0"
 
 require "bundler/setup"
 require "mysql2"
