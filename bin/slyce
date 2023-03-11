@@ -2,7 +2,7 @@
 
 STDOUT.sync = true
 
-VERSION="0.9.0"
+VERSION="0.9.1"
 
 require "bundler/setup"
 require "mysql2"
@@ -21,6 +21,7 @@ OptionParser.new.instance_eval do
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
   on "-s", "--show <count>"           , "Show this many values", Integer
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{VERSION}"; end
+  on "-w", "--where <cond>"           , "Filter rows (eg - 'age=33,Name=/[BW]ill/i,color=\"\"'"
   on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
 
   self
@@ -29,6 +30,7 @@ end.parse!(into: opts={}) rescue abort($!.message)
 abcd = opts[:alpha]
 show = opts[:show]
 want = opts[:extract].to_s.downcase.split(",")
+filt = opts[:where] and filt = "where\n  #{filt}"
 
 dbas ||= ARGV.shift or Kernel.abort "no database given"
 tabl ||= ARGV.shift or Kernel.abort "no table given"
@@ -77,6 +79,7 @@ want.each do |name|
       `#{name}` as val
     from
       `#{tabl}`
+    #{filt}
     group by
       val
     order by #{sort}
@@ -90,12 +93,14 @@ want.each do |name|
       count(distinct(ifnull(`#{name}`,0)))
     from
       `#{tabl}`
+    #{filt}
 
   tots = conn.query(<<~"").to_a[0][0]
     select
       count(ifnull(`#{name}`,0))
     from
       `#{tabl}`
+    #{filt}
 
   display(name, data, show, uniq, tots)
 end
