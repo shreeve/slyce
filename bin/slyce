@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
-STDOUT.sync = true
+VERSION="0.9.5"
 
-VERSION="0.9.2"
+STDOUT.sync = true
 
 require "mysql2"
 require "optparse"
@@ -27,19 +27,23 @@ OptionParser.new.instance_eval do
 end.parse!(into: opts={}) rescue abort($!.message)
 
 abcd = opts[:alpha]
+filt = opts[:where] and filt = "where\n  #{filt}"
 show = opts[:show]
 want = opts[:extract].to_s.downcase.split(",")
-filt = opts[:where] and filt = "where\n  #{filt}"
 
-dbas ||= ARGV.shift or Kernel.abort "no database given"
-tabl ||= ARGV.shift or Kernel.abort "no table given"
+dbas ||= ARGV.shift or abort "no database given"
+tabl ||= ARGV.shift or abort "no table given"
 
 # ==[ Helpers ]==
 
 class Mysql2::Client
-  def query!(stmt, *args, **, &)
+  def sql(...)
+    query(...)
+  end
+
+  def sql!(stmt, *args, **, &)
     puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
-    query(stmt, *args, **, &)
+    sql(stmt, *args, **, &)
   end
 end
 
@@ -72,7 +76,7 @@ end
 want.each do |name|
   sort = abcd ? "" : "cnt desc,"
   stmt = show ? "limit #{show}" : ""
-  data = conn.query(<<~"" + stmt).to_a
+  data = conn.sql(<<~"" + stmt).to_a
     select
       count(*) as cnt,
       `#{name}` as val
@@ -87,14 +91,14 @@ want.each do |name|
       -if(regexp_like(`#{name}`, '^\\\\d'), regexp_instr(`#{name}`, '[^\\\\d]'), null) desc,
       `#{name}` is null, `#{name}`
 
-  uniq = conn.query(<<~"").to_a[0][0]
+  uniq = conn.sql(<<~"").to_a[0][0]
     select
       count(distinct(ifnull(`#{name}`,0)))
     from
       `#{tabl}`
     #{filt}
 
-  tots = conn.query(<<~"").to_a[0][0]
+  tots = conn.sql(<<~"").to_a[0][0]
     select
       count(ifnull(`#{name}`,0))
     from
