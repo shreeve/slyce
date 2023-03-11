@@ -2,7 +2,7 @@
 
 STDOUT.sync = true
 
-VERSION="0.5.2"
+VERSION="0.9.0"
 
 require "bundler/setup"
 require "mysql2"
@@ -16,6 +16,7 @@ tabl = nil
 OptionParser.new.instance_eval do
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
+  on "-a", "--alpha"                  , "Sort alphabetically, not numerically"
   on "-c", "--columns"                , "Display column names and quit"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
   on "-s", "--show <count>"           , "Show this many values", Integer
@@ -25,8 +26,9 @@ OptionParser.new.instance_eval do
   self
 end.parse!(into: opts={}) rescue abort($!.message)
 
+abcd = opts[:alpha]
 show = opts[:show]
-keep = opts[:extract].to_s.downcase.split(",")
+want = opts[:extract].to_s.downcase.split(",")
 
 dbas ||= ARGV.shift or Kernel.abort "no database given"
 tabl ||= ARGV.shift or Kernel.abort "no table given"
@@ -35,7 +37,7 @@ tabl ||= ARGV.shift or Kernel.abort "no table given"
 
 class Mysql2::Client
   def query!(stmt, *args, **, &)
-    puts "\n==[ SQL statement ]==\n\n", stmt, ";"
+    puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
     query(stmt, *args, **, &)
   end
 end
@@ -59,16 +61,15 @@ end
 conn = Mysql2::Client.new(database: dbas, as: :array)
 resu = conn.query("select * from `#{tabl}` limit 0")
 cols = resu.fields
-keep = keep.empty? ? cols : keep & cols
+want = want.empty? ? cols : want & cols
 
 if opts[:columns]
   puts cols
   exit
 end
 
-keep.each do |name|
-
-  # data summary
+want.each do |name|
+  sort = abcd ? "" : "cnt desc,"
   stmt = show ? "limit #{show}" : ""
   data = conn.query(<<~"" + stmt).to_a
     select
@@ -78,8 +79,11 @@ keep.each do |name|
       `#{tabl}`
     group by
       val
-    order by
-      cnt desc
+    order by #{sort}
+      -if(regexp_like(`#{name}`, '^[-+]?((0|([1-9]\\\\d*)(\\\\.\\\\d*)?)|((0|([1-9]\\\\d*))\\\\.\\\\d+))$'), `#{name}` + 0, null) desc,
+      -if(regexp_like(`#{name}`, '^0\\\\d+$'), length(`#{name}`), null) desc,
+      -if(regexp_like(`#{name}`, '^\\\\d'), regexp_instr(`#{name}`, '[^\\\\d]'), null) desc,
+      `#{name}` is null, `#{name}`
 
   uniq = conn.query(<<~"").to_a[0][0]
     select
@@ -94,5 +98,4 @@ keep.each do |name|
       `#{tabl}`
 
   display(name, data, show, uniq, tots)
-
 end
