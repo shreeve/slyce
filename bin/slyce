@@ -93,7 +93,7 @@ want.each do |name|
 
   tots = conn.query(<<~"").to_a[0][0]
     select
-      count(`#{name}`)
+      count(ifnull(`#{name}`,0))
     from
       `#{tabl}`
 
