@@ -9,7 +9,7 @@
 #   wget https://github.com/nalgeon/sqlean/releases/download/0.19.3/sqlean-macos-arm64.zip
 #   unzip sqlean-macos-arm64.zip regexp.dylib
 
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 STDOUT.sync = true
 
@@ -69,7 +69,8 @@ def display(name, data, show, uniq, tots)
   data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
   puts "#{fill} -----\n"
   puts "%*d shown (top %d)" % [wide, seen, rows] if show and rows > 1
-  puts "%*d total (all %d)" % [wide, tots, uniq]
+  puts "%*d total (all %d)" % [wide, tots, uniq] if     uniq > 1
+  puts "%*d total"          % [wide, tots      ] unless uniq > 1
 end
 
 # ==[ Let 'er rip! ]==

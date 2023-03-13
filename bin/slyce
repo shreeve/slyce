@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 STDOUT.sync = true
 
@@ -55,8 +55,9 @@ def display(name, data, show, uniq, tots)
   puts "\n#{fill} #{name}\n#{fill} #{line}\n"
   data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
   puts "#{fill} -----\n"
-  puts "%*d shown (top %d)" % [wide, seen, rows] if show && rows > 1
-  puts "%*d total (all %d)" % [wide, tots, uniq]
+  puts "%*d shown (top %d)" % [wide, seen, rows] if     show && rows > 1
+  puts "%*d total (all %d)" % [wide, tots, uniq] if     uniq > 1
+  puts "%*d total"          % [wide, tots      ] unless uniq > 1
 end
 
 # ==[ Let 'er rip! ]==
