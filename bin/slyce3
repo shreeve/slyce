@@ -9,7 +9,7 @@
 #   wget https://github.com/nalgeon/sqlean/releases/download/0.19.3/sqlean-macos-arm64.zip
 #   unzip sqlean-macos-arm64.zip regexp.dylib
 
-VERSION="0.9.8"
+VERSION="1.0.0"
 
 STDOUT.sync = true
 
@@ -24,21 +24,21 @@ tabl = nil
 OptionParser.new.instance_eval do
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
-  on "-a", "--alpha"                  , "Sort alphabetically, not numerically"
   on "-c", "--columns"                , "Display column names and quit"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
+  on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-r", "--regexp <path>"          , "Path to the sqlean/regexp extension"
   on "-s", "--show <count>"           , "Show this many values", Integer
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{VERSION}"; end
-  on "-w", "--where <cond>"           , "Filter rows (eg - 'age=33,Name=/[BW]ill/i,color=\"\"'"
+  on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
   on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
 
   self
 end.parse!(into: opts={}) rescue abort($!.message)
 
-abcd = opts[:alpha]
 filt = opts[:where] and filt = "where\n  #{filt}"
-regx = opts[:regexp] || Dir["{,sqlean}/regexp.{dll,dylib,so}"].first
+natu = opts[:natural]
+regx = opts[:regexp] || Dir["{.,sqlean}/regexp.{dll,dylib,so}"].first
 show = opts[:show]
 want = opts[:extract].to_s.downcase.split(",")
 
@@ -50,9 +50,7 @@ regx &&  File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{r
 # ==[ Helpers ]==
 
 class Extralite::Database
-  def sql(...)
-    query_ary(...)
-  end
+  alias_method :sql, :query_ary
 
   def sql!(stmt, *args, **, &)
     puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
@@ -70,7 +68,7 @@ def display(name, data, show, uniq, tots)
   puts "\n#{fill} #{name}\n#{fill} #{line}\n"
   data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
   puts "#{fill} -----\n"
-  puts "%*d shown (top %d)" % [wide, rows, rows] if show
+  puts "%*d shown (top %d)" % [wide, seen, rows] if show
   puts "%*d total (all %d)" % [wide, tots, uniq]
 end
 
@@ -91,7 +89,7 @@ if want.empty?
 end
 
 want.each do |name|
-  sort = abcd ? "" : "cnt desc,"
+  sort = natu ? "" : "cnt desc,"
   stmt = show ? "limit #{show}" : ""
   data = conn.sql(<<~"" + stmt).to_a
     select
@@ -109,15 +107,9 @@ want.each do |name|
       `#{name}` is null, `#{name}`
     collate nocase
 
-  uniq = conn.sql(<<~"").to_a[0][0]
+  uniq, tots = conn.sql(<<~"").to_a[0]
     select
-      count(distinct(ifnull(`#{name}`,0)))
-    from
-      `#{tabl}`
-    #{filt}
-
-  tots = conn.sql(<<~"").to_a[0][0]
-    select
+      count(distinct(ifnull(`#{name}`,0))),
       count(ifnull(`#{name}`,0))
     from
       `#{tabl}`
