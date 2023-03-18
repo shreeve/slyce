@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-VERSION="1.0.2"
-
 STDOUT.sync = true
 
 require "mysql2"
@@ -13,13 +11,14 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
+  @version = "1.1.0"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on "-c", "--columns"                , "Display column names and quit"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-s", "--show <count>"           , "Show this many values", Integer
-  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{VERSION}"; end
+  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
   on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
 
