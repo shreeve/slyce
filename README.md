@@ -2,6 +2,24 @@
 
 Ruby utility to show summary statistics or export data from MySQL, SQLite, or DuckDB.
 
+## Usage
+
+```
+usage: slyce [options] <database> <table>
+        --csv                        Output comma separated values
+        --psv                        Output pipe separated values
+        --tsv                        Output tab separated values
+    -a, --ascii                      Convert data to ASCII using AnyAscii
+    -c, --columns                    Display column names and quit
+    -h, --help                       Show help and command usage
+    -n, --natural                    Sort naturally, not numerically
+    -r, --rows <count>               Rows of data to select
+    -s, --suppress                   Suppress header when exporting delimited files
+    -v, --version                    Show version number
+    -w, --where <cond>               Where clause (eg - 'age>50 and state='AZ')
+    -x, --extract <col1,col2,...>    Comma separated list of columns to extract
+```
+
 ## Supported platforms
 
 ### MySQL
