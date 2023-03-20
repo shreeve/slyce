@@ -1,0 +1,147 @@
+#!/usr/bin/env ruby
+
+STDOUT.sync = true
+
+require "duckdb"
+require "optparse"
+
+trap("INT" ) { abort "\n" }
+
+dbas = nil
+tabl = nil
+
+OptionParser.new.instance_eval do
+  @version = "1.2.0"
+  @banner  = "usage: #{program_name} [options] <database> <table>"
+
+  on       "--csv"                    , "Output comma separated values"
+  on       "--psv"                    , "Output pipe separated values"
+  on       "--tsv"                    , "Output tab separated values"
+  on "-a", "--ascii"                  , "Convert data to ASCII using AnyAscii"
+  on "-c", "--columns"                , "Display column names and quit"
+  on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
+  on "-n", "--natural"                , "Sort naturally, not numerically"
+  on "-r", "--rows <count>"           , "Rows of data to select", Integer
+  on "-s", "--suppress"               , "Suppress header when exporting delimited files"
+  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
+  on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
+  on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
+
+  self
+end.parse!(into: opts={}) rescue abort($!.message)
+
+xcsv = opts[:csv]
+xpsv = opts[:psv]
+xtsv = opts[:tsv]
+xprt = xcsv || xpsv || xtsv and require "censive"
+
+asky = opts[:ascii   ] and require "any_ascii"
+filt = opts[:where   ] and filt = "where\n  #{filt}"
+hide = opts[:suppress]
+natu = opts[:natural ]
+show = opts[:rows    ]
+want = opts[:extract].to_s.downcase.split(",")
+
+dbas ||= ARGV.shift or abort "no database given"
+tabl ||= ARGV.shift or abort "no table given"
+
+[xcsv, xpsv, xtsv].compact.size > 1 and abort "only one of csv, psv, or tsv allowed"
+
+# ==[ Helpers ]==
+
+class DuckDB::Connection
+  alias_method :sql, :query
+
+  def sql!(stmt, *args, **, &)
+    puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
+    sql(stmt, *args, **, &)
+  end
+end
+
+def display(name, data, show, uniq, tots)
+  seen = data.inject(0) {|seen, coun| seen += coun[0] }
+  rows = [data.size, seen].min
+  wide = tots.to_s.size
+  fill = " " * wide
+  line = "=" * name.size
+
+  puts "\n#{fill} #{name}\n#{fill} #{line}\n"
+  data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
+  puts "#{fill} -----\n"
+  puts "%*d shown (top %d)" % [wide, seen, rows] if     show && rows > 1
+  puts "%*d total (all %d)" % [wide, tots, uniq] if     uniq > 1
+  puts "%*d total"          % [wide, tots      ] unless uniq > 1
+end
+
+# ==[ Let 'er rip! ]==
+
+conn = DuckDB::Database.open(dbas).connect
+resu = conn.query(<<~end)
+  select column_name
+  from   information_schema.columns
+  where  table_name='#{tabl}'
+  order  by ordinal_position
+end
+cols = resu.to_a.flatten
+want = want.empty? ? cols : want & cols
+
+if opts[:columns]
+  puts cols
+  exit
+end
+
+if want.empty?
+  abort "no columns are selected"
+end
+
+# handle exports
+if xprt
+  list = want.map {|item| "\"#{item}\"" }.join(", ")
+  stmt = show ? "limit #{show}" : ""
+  data = conn.sql(<<~"" + stmt).to_a
+    select
+      #{list}
+    from
+      "#{tabl}"
+    #{filt}
+
+  seps = xcsv ? "," : xtsv ? "\t" : xpsv ? "|" : abort("unknown separator #{seps.inspect}")
+
+  Censive.writer(sep: seps) do |csv|
+    csv << want unless hide
+    data.each do |row|
+      csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.to_s }
+    end
+  end
+
+  exit
+end
+
+want.each do |name|
+  sort = natu ? "" : "cnt desc,"
+  stmt = show ? "limit #{show}" : ""
+  data = conn.sql(<<~"" + stmt).to_a
+    select
+      count(*) as cnt,
+      "#{name}" as val
+    from
+      "#{tabl}"
+    #{filt}
+    group by
+      val
+    order by #{sort}
+      if(regexp_matches("#{name}", '^[-+]?((0|([1-9]\\d*)(\\.\\d*)?)|((0|([1-9]\\d*))\\.\\d+))$'),cast("#{name}" as double),null) nulls last,
+      if(regexp_matches("#{name}", '^0\\d*$'),length("#{name}"),null)                                                             nulls last,
+      if(regexp_matches("#{name}", '^\\d+\\D'),length(regexp_extract("#{name}",'^(\\d+)',1)),null)                                nulls last,
+      "#{name}" is null, "#{name}"
+
+  uniq, tots = conn.sql(<<~"").to_a[0]
+    select
+      count(distinct(ifnull("#{name}",0))),
+      count(ifnull("#{name}",0))
+    from
+      "#{tabl}"
+    #{filt}
+
+  display(name, data, show, uniq, tots)
+end
