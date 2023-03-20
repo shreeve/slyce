@@ -12,6 +12,7 @@ Gem::Specification.new do |s|
   s.files       = `git ls-files`.split("\n") - %w[.gitignore]
   s.executables = `cd bin && git ls-files .`.split("\n")
   s.add_runtime_dependency "any_ascii", "~> 0.3.2"
+  s.add_runtime_dependency "duckdb", "~> 0.7.1"
   s.add_runtime_dependency "extralite-bundle", "~> 1.25"
   s.add_runtime_dependency "mysql2", "~> 0.5"
 end
