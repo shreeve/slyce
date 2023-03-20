@@ -24,13 +24,26 @@ usage: slyce [options] <database> <table>
 
 ### MySQL
 
+The executable is called `slyce`.
+
 ### SQLite
+
+The executable is called `slyce3` and requires the `regexp` sqlite3 extension from https://github.com/nalgeon/sqlean
+
+You can download the latest version at: https://github.com/nalgeon/sqlean/releases/latest
+
+For example, on Apple Silicon with macOS with an M1 you can use:
+
+```
+wget https://github.com/nalgeon/sqlean/releases/download/0.19.3/sqlean-macos-arm64.zip
+unzip sqlean-macos-arm64.zip regexp.dylib
+```
 
 ### DuckDB
 
-Ensure the `duckdb` gem is installed via:
+The executable is called `slyced`. It requires the `duckdb` gem, which can be installed with:
 
-`gem install duckdb`
+```gem install duckdb```
 
 ## Example
 
