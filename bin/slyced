@@ -11,7 +11,7 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
-  @version = "1.2.5"
+  @version = "1.2.6"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"                    , "Output comma separated values"
@@ -83,7 +83,7 @@ resu = conn.query(<<~end)
   order  by ordinal_position
 end
 cols = resu.to_a.flatten
-want = want.empty? ? cols : want & cols
+want = want.empty? ? cols : want.select {|e| cols.include?(e) }
 
 if opts[:columns]
   puts cols
