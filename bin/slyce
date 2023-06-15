@@ -11,7 +11,7 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
-  @version = "1.2.1"
+  @version = "1.2.3"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"                    , "Output comma separated values"
@@ -21,7 +21,7 @@ OptionParser.new.instance_eval do
   on "-c", "--columns"                , "Display column names and quit"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
   on "-n", "--natural"                , "Sort naturally, not numerically"
-  on "-r", "--rows <count>"           , "Rows of data to select", Integer
+  on "-r", "--rows <count>"           , "Rows of data to show", Integer
   on "-s", "--suppress"               , "Suppress header when exporting delimited files"
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
@@ -52,9 +52,9 @@ tabl ||= ARGV.shift or abort "no table given"
 class Mysql2::Client
   alias_method :sql, :query
 
-  def sql!(stmt, *args, **, &)
+  def sql!(stmt, *args, **opts, &block)
     puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
-    sql(stmt, *args, **, &)
+    sql(stmt, *args, **opts, &block)
   end
 end
 
