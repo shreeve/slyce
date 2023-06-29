@@ -131,6 +131,11 @@ if xprt
   exit
 end
 
+# MySQL 5.7 compatible version (still need to find replacement for regexp_instr)
+# -if((`#{name}` rlike '^[-+]?((0|([1-9]\\\\d*)(\\\\.\\\\d*)?)|((0|([1-9]\\\\d*))\\\\.\\\\d+))$'), `#{name}` + 0, null) desc,
+# -if((`#{name}` rlike '^0\\\\d+$'), length(`#{name}`), null) desc,
+# -if((`#{name}` rlike '^\\\\d'), regexp_instr(`#{name}`, '[^\\\\d]'), null) desc,
+
 want.each do |name|
   sort = natu ? "" : "cnt desc,"
   stmt = show ? "limit #{show}" : ""
