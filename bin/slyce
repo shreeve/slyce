@@ -121,7 +121,7 @@ if xprt
 
   seps = xcsv ? "," : xtsv ? "\t" : xpsv ? "|" : abort("unknown separator #{seps.inspect}")
 
-  Censive.writer(sep: seps) do |csv|
+  Censive.write(sep: seps) do |csv|
     csv << want unless hide
     data.each do |row|
       csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.to_s }
