@@ -78,7 +78,9 @@ end
 # ==[ Let 'er rip! ]==
 
 # get database connection
-if dbas.include?("/")
+if !dbas.include?("/")
+  conf = { database: dbas }
+else
   dbas = $' if dbas =~ %r|^mysql://| # drop mysql:// prefix, if present
   auth, dbas = dbas.split("/", 2)
   if auth =~ /^(?:(\w+)(?::([^@]+))?@)?(?:([^:]+)?(?::(\d+))?)$/
@@ -93,8 +95,6 @@ if dbas.include?("/")
   else
     abort "invalid database value #{dbas.inspect}"
   end
-else
-  conf = { database: dbas }
 end
 
 conn = Mysql2::Client.new(**conf, as: :array)
