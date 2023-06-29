@@ -11,7 +11,7 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
-  @version = "1.2.7"
+  @version = "1.3.0"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"                    , "Output comma separated values"
@@ -23,6 +23,7 @@ OptionParser.new.instance_eval do
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-r", "--rows <count>"           , "Rows of data to show", Integer
   on "-s", "--suppress"               , "Suppress header when exporting delimited files"
+  on "-t", "--tables"                 , "Display table names and quit"
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
   on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns (or tables) to extract"
@@ -43,7 +44,7 @@ show = opts[:rows    ]
 want = opts[:extract].to_s.downcase.split(",")
 
 dbas ||= ARGV.shift or abort "no database given"
-tabl ||= ARGV.shift or abort "no table given"
+tabl ||= ARGV.shift or opts[:tables] or !want.empty? or abort "no table given"
 
 [xcsv, xpsv, xtsv].compact.size > 1 and abort "only one of csv, psv, or tsv allowed"
 
@@ -75,6 +76,7 @@ end
 
 # ==[ Let 'er rip! ]==
 
+# get database connection
 if dbas.include?("/")
   dbas = $' if dbas =~ %r|^mysql://| # drop mysql:// prefix, if present
   auth, dbas = dbas.split("/", 2)
@@ -95,7 +97,18 @@ else
 end
 
 conn = Mysql2::Client.new(**conf, as: :array)
-resu = conn.query("select * from `#{tabl}` limit 0")
+
+# get table names
+if tabl.nil? || opts[:tables]
+  resu = conn.sql("show tables")
+  tbls = resu.to_a.flatten
+  want = (want.empty? || opts[:tables]) ? tbls : want.select {|e| tbls.include?(e) }
+  puts want
+  exit
+end
+
+# get column names
+resu = conn.sql("select * from `#{tabl}` limit 0")
 cols = resu.fields
 want = want.empty? ? cols : want.select {|e| cols.include?(e) }
 
