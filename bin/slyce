@@ -11,7 +11,7 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
-  @version = "1.3.1"
+  @version = "1.3.3"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"                    , "Output comma separated values"
@@ -19,6 +19,7 @@ OptionParser.new.instance_eval do
   on       "--tsv"                    , "Output tab separated values"
   on "-a", "--ascii"                  , "Convert data to ASCII using AnyAscii"
   on "-c", "--columns"                , "Display column names and quit"
+  on "-d", "--dump"                   , "Dump database schema and quit"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-r", "--rows <count>"           , "Rows of data to show", Integer
@@ -26,7 +27,7 @@ OptionParser.new.instance_eval do
   on "-t", "--tables"                 , "Display table names and quit"
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
-  on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns (or tables) to extract"
+  on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns or tables to extract"
 
   self
 end.parse!(into: opts={}) rescue abort($!.message)
@@ -99,11 +100,34 @@ end
 
 conn = Mysql2::Client.new(**conf, as: :array)
 
-# get table names
-if tabl.nil? || opts[:tables]
+# dump database schema or show table names
+if tabl.nil? || opts[:tables] || opts[:dump]
+
+  # get table names
   resu = conn.sql("show tables")
   tbls = resu.to_a.flatten
-  want = (want.empty? || opts[:tables]) ? tbls : want.select {|e| tbls.include?(e) }
+  want = (want.empty? || opts[:tables] || opts[:dump]) ? tbls : want.select {|e| tbls.include?(e) }
+
+  # dump database schema
+  if opts[:dump]
+    pict = "%Y-%m-%dT%H:%M:%S%z"
+    puts "-- Dump of `#{dbas}` database on #{Time.now.strftime(pict)}\n\n"
+    puts "set foreign_key_checks=0;\n\n" unless want.empty?
+    tail = []
+    want.each do |name|
+      text = conn.sql("show create table `#{name}`").to_a.flatten[1] + ";\n\n"
+      if text =~ /^create table/i
+        puts text
+      elsif text.gsub!(/^(create ).*?(?=view)/i, '\1')
+        tail << text
+      end
+    end
+    puts tail.join unless tail.empty?
+    puts "set foreign_key_checks=1;\n\n" unless want.empty?
+    exit
+  end
+
+  # show table names
   puts want
   exit
 end
