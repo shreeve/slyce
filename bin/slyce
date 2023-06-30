@@ -11,7 +11,7 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
-  @version = "1.3.3"
+  @version = "1.3.4"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"                    , "Output comma separated values"
@@ -43,7 +43,7 @@ want = opts[:extract ].to_s.downcase.split(",")
 natu = opts[:natural ]
 show = opts[:rows    ]
 hide = opts[:suppress]
-filt = opts[:where   ] and filt = "where\n  #{filt}"
+filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
 
 dbas ||= ARGV.shift or abort "no database given"
 tabl ||= ARGV.shift or opts[:tables] or !want.empty? or abort "no table given"
@@ -98,7 +98,9 @@ else
   end
 end
 
+# connect to database and get server version
 conn = Mysql2::Client.new(**conf, as: :array)
+ver5 = conn.server_info[:version] =~ /^5/
 
 # dump database schema or show table names
 if tabl.nil? || opts[:tables] || opts[:dump]
@@ -154,8 +156,7 @@ if xprt
     select
       #{list}
     from
-      `#{tabl}`
-    #{filt}
+      `#{tabl}`#{filt}
 
   seps = xcsv ? "," : xtsv ? "\t" : xpsv ? "|" : abort("unknown separator #{seps.inspect}")
 
@@ -169,36 +170,36 @@ if xprt
   exit
 end
 
-# MySQL 5.7 compatible version (still need to find replacement for regexp_instr)
-# -if((`#{name}` rlike '^[-+]?((0|([1-9]\\\\d*)(\\\\.\\\\d*)?)|((0|([1-9]\\\\d*))\\\\.\\\\d+))$'), `#{name}` + 0, null) desc,
-# -if((`#{name}` rlike '^0\\\\d+$'), length(`#{name}`), null) desc,
-# -if((`#{name}` rlike '^\\\\d'), regexp_instr(`#{name}`, '[^\\\\d]'), null) desc,
-
 want.each do |name|
   sort = natu ? "" : "cnt desc,"
-  stmt = show ? "limit #{show}" : ""
-  data = conn.sql(<<~"" + stmt).to_a
+  like =(ver5 ? <<~"" : <<~"").gsub(/(.)^/m, '\1  ').rstrip
+    -if((`#{name}` rlike '^[-+]?((0|([1-9][0-9]*)(\\\\.[0-9]*)?)|((0|([1-9][0-9]*))\\\\.[0-9]+))$'), `#{name}` + 0, null) desc,
+    -if((`#{name}` rlike '^0[0-9]+$'), length(`#{name}`), null) desc,
+    -if((`#{name}` rlike '^[0-9]'), length(concat("1", `#{name}`) + 0), null) desc,
+
+    -if(regexp_like(`#{name}`, '^[-+]?((0|([1-9]\\\\d*)(\\\\.\\\\d*)?)|((0|([1-9]\\\\d*))\\\\.\\\\d+))$'), `#{name}` + 0, null) desc,
+    -if(regexp_like(`#{name}`, '^0\\\\d+$'), length(`#{name}`), null) desc,
+    -if(regexp_like(`#{name}`, '^\\\\d'), regexp_instr(`#{name}`, '[^\\\\d]'), null) desc,
+
+  data = conn.sql(<<~"".rstrip).to_a
     select
       count(*) as cnt,
       `#{name}` as val
     from
-      `#{tabl}`
-    #{filt}
+      `#{tabl}`#{filt}
     group by
       val
     order by #{sort}
-      -if(regexp_like(`#{name}`, '^[-+]?((0|([1-9]\\\\d*)(\\\\.\\\\d*)?)|((0|([1-9]\\\\d*))\\\\.\\\\d+))$'), `#{name}` + 0, null) desc,
-      -if(regexp_like(`#{name}`, '^0\\\\d+$'), length(`#{name}`), null) desc,
-      -if(regexp_like(`#{name}`, '^\\\\d'), regexp_instr(`#{name}`, '[^\\\\d]'), null) desc,
+      #{like}
       `#{name}` is null, `#{name}`
+    #{show ? "limit #{show}" : ""}
 
-  uniq, tots = conn.sql(<<~"").to_a[0]
+  uniq, tots = conn.sql(<<~"".rstrip).to_a[0]
     select
       count(distinct(ifnull(`#{name}`,0))),
       count(ifnull(`#{name}`,0))
     from
-      `#{tabl}`
-    #{filt}
+      `#{tabl}`#{filt}
 
   display(name, data, show, uniq, tots)
 end
