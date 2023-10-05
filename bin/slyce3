@@ -24,6 +24,7 @@ OptionParser.new.instance_eval do
 
   on "-c", "--columns"                , "Display column names and quit"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
+  on "-k", "--keep"                   , "For CSV files, keep the .slyce database for reuse"
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-r", "--regexp <path>"          , "Path to the sqlean/regexp extension"
   on "-s", "--show <count>"           , "Show this many values", Integer
@@ -35,6 +36,7 @@ OptionParser.new.instance_eval do
 end.parse!(into: opts={}) rescue abort($!.message)
 
 filt = opts[:where] and filt = "where\n  #{filt}"
+keep = opts[:keep]
 natu = opts[:natural]
 regx = opts[:regexp] || Dir["{.,sqlean}/regexp.{dll,dylib,so}"].first
 show = opts[:show]
@@ -80,6 +82,7 @@ end
 
 # ==[ Let 'er rip! ]==
 
+file and keep || `rm -f #{dbas}`
 file and `echo ".mode csv\n.import '#{file}' #{tabl}" | sqlite3 -init /dev/stdin "#{dbas}"`
 conn = Extralite::Database.new(dbas)
 resu = conn.load_extension(regx) rescue abort("unable to load regexp extension '#{regx}'")
@@ -124,3 +127,4 @@ want.each do |name|
 
   display(name, data, show, uniq, tots)
 end
+file and keep || `rm -f #{dbas}`
