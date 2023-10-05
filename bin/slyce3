@@ -127,4 +127,5 @@ want.each do |name|
 
   display(name, data, show, uniq, tots)
 end
+
 file and keep || `rm -f #{dbas}`
