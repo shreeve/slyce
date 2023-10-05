@@ -6,7 +6,7 @@
 #
 # For example, on Apple Silicon with macOS with an M1 you can use:
 #
-#   wget https://github.com/nalgeon/sqlean/releases/download/0.19.3/sqlean-macos-arm64.zip
+#   wget https://github.com/nalgeon/sqlean/releases/download/0.21.8/sqlean-macos-arm64.zip
 #   unzip sqlean-macos-arm64.zip regexp.dylib
 
 STDOUT.sync = true
