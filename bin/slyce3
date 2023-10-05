@@ -23,6 +23,7 @@ OptionParser.new.instance_eval do
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on "-c", "--columns"                , "Display column names and quit"
+  on "-d", "--delete"                 , "Delete the .slyce database first"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
   on "-k", "--keep"                   , "For CSV files, keep the .slyce database for reuse"
   on "-n", "--natural"                , "Sort naturally, not numerically"
@@ -37,12 +38,16 @@ end.parse!(into: opts={}) rescue abort($!.message)
 
 filt = opts[:where] and filt = "where\n  #{filt}"
 keep = opts[:keep]
+nuke = opts[:delete]
 natu = opts[:natural]
 regx = opts[:regexp] || Dir["{.,sqlean}/regexp.{dll,dylib,so}"].first
 show = opts[:show]
 want = opts[:extract].to_s.downcase.split(",")
 
-dbas ||= ARGV.shift or abort "no database given"
+# eager deletion of prior .slyce database
+nuke and `rm -f .slyce`
+
+dbas ||= ARGV.shift or nuke ? exit : abort("no database given")
 
 if dbas =~ /\.csv$/
   file = dbas
@@ -82,8 +87,12 @@ end
 
 # ==[ Let 'er rip! ]==
 
-file and keep || `rm -f #{dbas}`
-file and `echo ".mode csv\n.import '#{file}' #{tabl}" | sqlite3 -init /dev/stdin "#{dbas}"`
+if file
+  seen = File.exist?(dbas)
+  seen && !keep and `rm -f #{dbas}`
+  seen &&  keep or  `echo ".mode csv\n.import '#{file}' #{tabl}" | sqlite3 -init /dev/stdin "#{dbas}"`
+end
+
 conn = Extralite::Database.new(dbas)
 resu = conn.load_extension(regx) rescue abort("unable to load regexp extension '#{regx}'")
 cols = conn.columns("select * from `#{tabl}` limit 0").map(&:to_s)
