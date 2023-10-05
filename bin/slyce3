@@ -43,7 +43,7 @@ want = opts[:extract].to_s.downcase.split(",")
 dbas ||= ARGV.shift or abort "no database given"
 tabl ||= ARGV.shift or abort "no table given"
 
-regx &&  File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{regx}'" : ''}"
+regx && File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{regx}'" : ''}"
 
 # ==[ Helpers ]==
 
