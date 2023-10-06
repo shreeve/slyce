@@ -100,6 +100,7 @@ end
 
 # connect to database and get server version
 conn = Mysql2::Client.new(**conf, as: :array)
+conn.sql("set session sql_mode='ansi'") # ANSI double-quotes
 ver5 = conn.server_info[:version] =~ /^5/
 
 # dump database schema or show table names
@@ -113,11 +114,11 @@ if tabl.nil? || opts[:tables] || opts[:dump]
   # dump database schema
   if opts[:dump]
     pict = "%Y-%m-%dT%H:%M:%S%z"
-    puts "-- Dump of `#{dbas}` database on #{Time.now.strftime(pict)}\n\n"
+    puts "-- Dump of \"#{dbas}\" database on #{Time.now.strftime(pict)}\n\n"
     puts "set foreign_key_checks=0;\n\n" unless want.empty?
     tail = []
     want.each do |name|
-      text = conn.sql("show create table `#{name}`").to_a.flatten[1] + ";\n\n"
+      text = conn.sql("show create table \"#{name}\"").to_a.flatten[1] + ";\n\n"
       if text =~ /^create table/i
         puts text
       elsif text.gsub!(/^(create ).*?(?=view)/i, '\1')
@@ -135,7 +136,7 @@ if tabl.nil? || opts[:tables] || opts[:dump]
 end
 
 # get column names
-resu = conn.sql("select * from `#{tabl}` limit 0")
+resu = conn.sql("select * from \"#{tabl}\" limit 0")
 cols = resu.fields
 want = want.empty? ? cols : want.select {|e| cols.include?(e) }
 
@@ -150,13 +151,14 @@ end
 
 # handle exports
 if xprt
-  list = want.map {|item| "`#{item}`" }.join(", ")
   stmt = show ? "limit #{show}" : ""
   data = conn.sql(<<~"" + stmt).to_a
+  list = want.map {|item| %{"#{item}"} }.join(", ")
     select
       #{list}
     from
-      `#{tabl}`#{filt}
+      "#{tabl}"
+    #{filt}
 
   seps = xcsv ? "," : xtsv ? "\t" : xpsv ? "|" : abort("unknown separator #{seps.inspect}")
 
@@ -173,33 +175,33 @@ end
 want.each do |name|
   sort = natu ? "" : "cnt desc,"
   like =(ver5 ? <<~"" : <<~"").gsub(/(.)^/m, '\1  ').rstrip
-    -if((`#{name}` rlike '^[-+]?((0|([1-9][0-9]*)(\\\\.[0-9]*)?)|((0|([1-9][0-9]*))\\\\.[0-9]+))$'), `#{name}` + 0, null) desc,
-    -if((`#{name}` rlike '^0[0-9]+$'), length(`#{name}`), null) desc,
-    -if((`#{name}` rlike '^[0-9]'), length(concat("1", `#{name}`) + 0), null) desc,
+    -if(("#{name}" rlike '^[-+]?((0|([1-9][0-9]*)(\\\\.[0-9]*)?)|((0|([1-9][0-9]*))\\\\.[0-9]+))$'), "#{name}" + 0, null) desc,
+    -if(("#{name}" rlike '^0[0-9]+$'), length("#{name}"), null) desc,
+    -if(("#{name}" rlike '^[0-9]'), length(concat('1', "#{name}") + 0), null) desc,
 
-    -if(regexp_like(`#{name}`, '^[-+]?((0|([1-9]\\\\d*)(\\\\.\\\\d*)?)|((0|([1-9]\\\\d*))\\\\.\\\\d+))$'), `#{name}` + 0, null) desc,
-    -if(regexp_like(`#{name}`, '^0\\\\d+$'), length(`#{name}`), null) desc,
-    -if(regexp_like(`#{name}`, '^\\\\d'), regexp_instr(`#{name}`, '[^\\\\d]'), null) desc,
+    -if(regexp_like("#{name}", '^[-+]?((0|([1-9]\\\\d*)(\\\\.\\\\d*)?)|((0|([1-9]\\\\d*))\\\\.\\\\d+))$'), "#{name}" + 0, null) desc,
+    -if(regexp_like("#{name}", '^0\\\\d+$'), length("#{name}"), null) desc,
+    -if(regexp_like("#{name}", '^\\\\d'), regexp_instr("#{name}", '[^\\\\d]'), null) desc,
 
   data = conn.sql(<<~"".rstrip).to_a
     select
       count(*) as cnt,
-      `#{name}` as val
+      "#{name}" as val
     from
-      `#{tabl}`#{filt}
+      "#{tabl}"#{filt}
     group by
       val
     order by #{sort}
       #{like}
-      `#{name}` is null, `#{name}`
     #{show ? "limit #{show}" : ""}
+      "#{name}" is null, "#{name}"
 
   uniq, tots = conn.sql(<<~"".rstrip).to_a[0]
     select
-      count(distinct(ifnull(`#{name}`,0))),
-      count(ifnull(`#{name}`,0))
+      count(distinct(ifnull("#{name}",0))),
+      count(ifnull("#{name}",0))
     from
-      `#{tabl}`#{filt}
+      "#{tabl}"
 
   display(name, data, show, uniq, tots)
 end
