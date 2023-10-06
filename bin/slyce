@@ -84,14 +84,13 @@ if !dbas.include?("/")
 else
   dbas = $' if dbas =~ %r|^mysql://| # drop mysql:// prefix, if present
   auth, dbas = dbas.split("/", 2)
-  if auth =~ /^(?:(\w+)(?::([^@]+))?@)?(?:([^:]+)?(?::(\d+))?)$/
-    user, pass, host, port = $1, $2, $3, $4 # user:pass@host:port
+  if auth =~ /^(?:(\w+)(?::([^@]+))?@?)?(?:([^:]+)?(?::(\d+))?)$/
     conf = {
       database: dbas,
       username: $1,
       password: $2,
-      host:     $3,
-      port:     $4,
+      host:     $3 || "127.0.0.1",
+      port:     $4 || "3306",
     }.compact
   else
     abort "invalid database value #{dbas.inspect}"
