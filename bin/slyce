@@ -151,14 +151,15 @@ end
 
 # handle exports
 if xprt
-  stmt = show ? "limit #{show}" : ""
-  data = conn.sql(<<~"" + stmt).to_a
   list = want.map {|item| %{"#{item}"} }.join(", ")
+  limt = show ? "limit #{show}" : ""
+  data = conn.sql(<<~"".rstrip).to_a
     select
       #{list}
     from
       "#{tabl}"
     #{filt}
+    #{limt}
 
   seps = xcsv ? "," : xtsv ? "\t" : xpsv ? "|" : abort("unknown separator #{seps.inspect}")
 
@@ -174,6 +175,7 @@ end
 
 want.each do |name|
   sort = natu ? "" : "cnt desc,"
+  limt = show ? "limit #{show}" : ""
   like =(ver5 ? <<~"" : <<~"").gsub(/(.)^/m, '\1  ').rstrip
     -if(("#{name}" rlike '^[-+]?((0|([1-9][0-9]*)(\\\\.[0-9]*)?)|((0|([1-9][0-9]*))\\\\.[0-9]+))$'), "#{name}" + 0, null) desc,
     -if(("#{name}" rlike '^0[0-9]+$'), length("#{name}"), null) desc,
@@ -193,8 +195,8 @@ want.each do |name|
       val
     order by #{sort}
       #{like}
-    #{show ? "limit #{show}" : ""}
       "#{name}" is null, "#{name}"
+    #{limt}
 
   uniq, tots = conn.sql(<<~"".rstrip).to_a[0]
     select
@@ -202,6 +204,7 @@ want.each do |name|
       count(ifnull("#{name}",0))
     from
       "#{tabl}"
+    #{filt}
 
   display(name, data, show, uniq, tots)
 end
