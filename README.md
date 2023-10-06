@@ -2,6 +2,10 @@
 
 Ruby utility to show summary statistics or export data from MySQL, SQLite, or DuckDB.
 
+## TODO
+
+* Unify each each executable to have as close to the same features as possible
+
 ## Usage
 
 ```
