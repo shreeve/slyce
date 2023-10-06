@@ -64,9 +64,9 @@ regx && File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{re
 class Extralite::Database
   alias_method :sql, :query_ary
 
-  def sql!(stmt, *args, **, &)
+  def sql!(stmt, *args, **opts, &block)
     puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
-    sql(stmt, *args, **, &)
+    sql(stmt, *args, **opts, &block)
   end
 end
 
