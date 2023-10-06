@@ -131,10 +131,10 @@ want.each do |name|
 
   uniq, tots = conn.sql(<<~"").to_a[0]
     select
-      count(distinct(ifnull(`#{name}`,0))),
-      count(ifnull(`#{name}`,0))
+      count(distinct(ifnull("#{name}",0))),
+      count(ifnull("#{name}",0))
     from
-      `#{tabl}`
+      "#{tabl}"
     #{filt}
 
   display(name, data, show, uniq, tots)
