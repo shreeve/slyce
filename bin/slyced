@@ -98,9 +98,9 @@ end
 
 # handle exports
 if xprt
-  list = want.map {|item| "\"#{item}\"" }.join(", ")
   stmt = show ? "limit #{show}" : ""
   data = conn.sql(<<~"" + stmt).to_a
+  list = want.map {|item| %{"#{item}"} }.join(", ")
     select
       #{list}
     from
