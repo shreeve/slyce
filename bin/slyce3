@@ -95,7 +95,7 @@ end
 
 conn = Extralite::Database.new(dbas)
 resu = conn.load_extension(regx) rescue abort("unable to load regexp extension '#{regx}'")
-cols = conn.columns("select * from `#{tabl}` limit 0").map(&:to_s)
+cols = conn.columns("select * from \"#{tabl}\" limit 0").map(&:to_s)
 want = want.empty? ? cols : Hash[cols.map(&:downcase).zip(cols)].values_at(*want).compact
 
 if opts[:columns]
