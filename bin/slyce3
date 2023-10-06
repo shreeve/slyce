@@ -36,13 +36,13 @@ OptionParser.new.instance_eval do
   self
 end.parse!(into: opts={}) rescue abort($!.message)
 
-filt = opts[:where] and filt = "where\n  #{filt}"
-keep = opts[:keep]
-nuke = opts[:delete]
-natu = opts[:natural]
-regx = opts[:regexp] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"].first
-show = opts[:show]
-want = opts[:extract].to_s.downcase.split(",")
+nuke = opts[:delete  ]
+want = opts[:extract ].to_s.downcase.split(",")
+keep = opts[:keep    ]
+natu = opts[:natural ]
+regx = opts[:regexp  ] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"].first
+show = opts[:show    ]
+filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
 
 # eager deletion of prior .slyce database
 nuke and `rm -f .slyce`
