@@ -40,7 +40,7 @@ filt = opts[:where] and filt = "where\n  #{filt}"
 keep = opts[:keep]
 nuke = opts[:delete]
 natu = opts[:natural]
-regx = opts[:regexp] || Dir["{.,sqlean}/regexp.{dll,dylib,so}"].first
+regx = opts[:regexp] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"].first
 show = opts[:show]
 want = opts[:extract].to_s.downcase.split(",")
 
