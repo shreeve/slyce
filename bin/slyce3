@@ -109,22 +109,25 @@ end
 
 want.each do |name|
   sort = natu ? "" : "cnt desc,"
-  stmt = show ? "limit #{show}" : ""
-  data = conn.sql(<<~"" + stmt).to_a
+  limt = show ? "limit #{show}" : ""
+  like = <<~"".gsub(/(.)^/m, '\1  ').rstrip
+    -iif(regexp_like("#{name}", '^[-+]?((0|([1-9]\\d*)(\\.\\d*)?)|((0|([1-9]\\d*))\\.\\d+))$'), "#{name}" + 0, null) desc,
+    -iif(regexp_like("#{name}", '^0\\d+$'), length("#{name}"), null) desc,
+    -iif(regexp_like("#{name}", '^\\d'), length(regexp_substr("#{name}", '^\\d+')), null) desc,
+
+  data = conn.sql(<<~"".rstrip).to_a
     select
       count(*) as cnt,
-      `#{name}` as val
+      "#{name}" as val
     from
-      `#{tabl}`
-    #{filt}
+      "#{tabl}"#{filt}
     group by
       val
     order by #{sort}
-      -iif(regexp_like(`#{name}`, '^[-+]?((0|([1-9]\\d*)(\\.\\d*)?)|((0|([1-9]\\d*))\\.\\d+))$'), `#{name}` + 0, null) desc,
-      -iif(regexp_like(`#{name}`, '^0\\d+$'), length(`#{name}`), null) desc,
-      -iif(regexp_like(`#{name}`, '^\\d'), length(regexp_substr(`#{name}`, '^\\d+')), null) desc,
-      `#{name}` is null, `#{name}`
+      #{like}
+      "#{name}" is null, "#{name}"
     collate nocase
+    #{limt}
 
   uniq, tots = conn.sql(<<~"").to_a[0]
     select
