@@ -11,7 +11,7 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
-  @version = "1.3.5"
+  @version = "1.4.0"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"                    , "Output comma separated values"
@@ -166,7 +166,8 @@ if xprt
   Censive.write(sep: seps) do |csv|
     csv << want unless hide
     data.each do |row|
-      csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.to_s }
+    # csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.to_s }
+      csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.nil? ? nil : e.to_s }
     end
   end
 

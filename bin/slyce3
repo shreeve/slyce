@@ -20,6 +20,7 @@ dbas = nil
 tabl = nil
 
 OptionParser.new.instance_eval do
+  @version = "1.4.0"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on "-c", "--columns"                , "Display column names and quit"
@@ -29,7 +30,7 @@ OptionParser.new.instance_eval do
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-r", "--regexp <path>"          , "Path to the sqlean/regexp extension"
   on "-s", "--show <count>"           , "Show this many values", Integer
-  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{VERSION}"; end
+  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
   on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
 
