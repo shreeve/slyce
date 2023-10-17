@@ -81,25 +81,18 @@ nuke and `rm -f .slyce`
 
 dbas ||= ARGV.shift or nuke ? exit : abort("no database given")
 
-if dbas =~ /\.csv$/
-  file = dbas
+case dbas
+when /(\.csv)$/, "/dev/stdin", "-"
+  file = $1 ? dbas : "-"
   dbas = ".slyce"
   tabl = "csv"
+  `rm -f "#{dbas}"` if File.exist?(dbas) && !keep
+  `sqlite3 -csv '#{dbas}' ".import '|cat #{file}' '#{tabl}'"`
 else
   tabl ||= ARGV.shift or abort "no table given"
 end
 
-
-
-end
-
 # ==[ Let 'er rip! ]==
-
-if file
-  seen = File.exist?(dbas)
-  seen && !keep and `rm -f #{dbas}`
-  seen &&  keep or  `echo ".mode csv\n.import '#{file}' #{tabl}" | sqlite3 -init /dev/stdin "#{dbas}"`
-end
 
 conn = Extralite::Database.new(dbas)
 resu = conn.load_extension(regx) rescue abort("unable to load regexp extension '#{regx}'")
@@ -148,4 +141,4 @@ want.each do |name|
   display(name, data, show, uniq, tots)
 end
 
-file and keep || `rm -f #{dbas}`
+`rm -f "#{dbas}"` if file && !keep
