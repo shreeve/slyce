@@ -52,10 +52,14 @@ OptionParser.new.instance_eval do
   @version = "1.5.0"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
+  on       "--csv"                    , "Output comma separated values"
+  on       "--psv"                    , "Output pipe separated values"
+  on       "--tsv"                    , "Output tab separated values"
+  on "-a", "--ascii"                  , "Convert data to ASCII using AnyAscii"
   on "-c", "--columns"                , "Display column names and quit"
   on "-d", "--delete"                 , "Delete the .slyce database first"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
-  on "-k", "--keep"                   , "For CSV files, keep the .slyce database for reuse"
+  on "-H", "--no-headers"             , "Do not show headers when exporting delimited files"
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-r", "--regexp <path>"          , "Path to the sqlean/regexp extension"
   on "-s", "--show <count>"           , "Show this many values", Integer
@@ -69,13 +73,20 @@ end.parse!(into: opts={}) rescue abort($!.message)
 dbas = nil
 tabl = nil
 
-nuke = opts[:delete  ]
-want = opts[:extract ].to_s.downcase.split(",")
-keep = opts[:keep    ]
-natu = opts[:natural ]
-regx = opts[:regexp  ] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"].first
-show = opts[:show    ]
-filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
+xcsv = opts[:csv]
+xpsv = opts[:psv]
+xtsv = opts[:tsv]
+xprt = xcsv || xpsv || xtsv and require "censive"
+
+asky = opts[:ascii       ] and require "any_ascii"
+nuke = opts[:delete      ]
+want = opts[:extract     ].to_s.downcase.split(",")
+keep = opts[:keep        ]
+natu = opts[:natural     ]
+regx = opts[:regexp      ] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"].first
+show = opts[:show        ]
+hide = opts[:"no-headers"]
+filt = opts[:where       ] and filt = "\nwhere\n  #{filt}"
 
 # ensure regexp extension is available
 regx && File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{regx}'" : ''}"
@@ -110,6 +121,30 @@ end
 
 if want.empty?
   abort "no columns are selected"
+end
+
+# handle exports
+if xprt
+  list = want.map {|item| %{"#{item}"} }.join(", ")
+  limt = show ? "limit #{show}" : ""
+  data = conn.sql(<<~"".rstrip).to_a
+    select
+      #{list}
+    from
+      "#{tabl}"
+    #{filt}
+    #{limt}
+
+  seps = xcsv ? "," : xtsv ? "\t" : xpsv ? "|" : abort("unknown separator #{seps.inspect}")
+
+  Censive.write(sep: seps) do |csv|
+    csv << want unless hide
+    data.each do |row|
+      csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.to_s }
+    end
+  end
+
+  exit
 end
 
 want.each do |name|
