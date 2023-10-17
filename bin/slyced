@@ -49,7 +49,7 @@ OptionParser.new.instance_eval do
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
   on "-H", "--no-headers"             , "Do not show headers when exporting delimited files"
   on "-n", "--natural"                , "Sort naturally, not numerically"
-  on "-r", "--rows <count>"           , "Rows of data to show", Integer
+  on "-s", "--show <count>"           , "Show this many values", Integer
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
   on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns to extract"
@@ -68,8 +68,8 @@ xprt = xcsv || xpsv || xtsv and require "censive"
 asky = opts[:ascii   ] and require "any_ascii"
 want = opts[:extract].to_s.downcase.split(",")
 natu = opts[:natural ]
-show = opts[:rows    ]
 filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
+show = opts[:show        ]
 hide = opts[:"no-headers"]
 
 dbas ||= ARGV.shift or abort "no database given"
