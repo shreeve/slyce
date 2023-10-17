@@ -32,10 +32,14 @@ def display(name, data, show, uniq, tots)
   rows = [data.size, seen].min
   wide = tots.to_s.size
   fill = " " * wide
+  over = "\n#{fill} "
   line = "=" * name.size
 
   puts "\n#{fill} #{name}\n#{fill} #{line}\n"
-  data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
+# data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
+  data.each do |cnt, val| # TODO: only enable this with an option? (it's rarely useful)
+    puts "%*d %s" % [wide, cnt, val&.gsub("\n", over) || "NULL"]
+  end
   puts "#{fill} -----\n"
   puts "%*d shown (top %d)" % [wide, seen, rows] if     show && rows > 1
   puts "%*d total (all %d)" % [wide, tots, uniq] if     uniq > 1
