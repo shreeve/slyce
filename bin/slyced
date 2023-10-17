@@ -65,12 +65,12 @@ xpsv = opts[:psv]
 xtsv = opts[:tsv]
 xprt = xcsv || xpsv || xtsv and require "censive"
 
-asky = opts[:ascii   ] and require "any_ascii"
-want = opts[:extract].to_s.downcase.split(",")
-natu = opts[:natural ]
-filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
+asky = opts[:ascii       ] and require "any_ascii"
+want = opts[:extract]    .to_s.downcase.split(",")
+natu = opts[:natural     ]
 show = opts[:show        ]
 hide = opts[:"no-headers"]
+filt = opts[:where       ] and filt = "\nwhere\n  #{filt}"
 
 dbas ||= ARGV.shift or abort "no database given"
 tabl ||= ARGV.shift or abort "no table given"
