@@ -16,6 +16,33 @@ require "optparse"
 
 trap("INT" ) { abort "\n" }
 
+# ==[ Helpers ]==
+
+class Extralite::Database
+  alias_method :sql, :query_ary
+
+  def sql!(stmt, *args, **opts, &block)
+    puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
+    sql(stmt, *args, **opts, &block)
+  end
+end
+
+def display(name, data, show, uniq, tots)
+  seen = data.inject(0) {|seen, coun| seen += coun[0] }
+  rows = [data.size, seen].min
+  wide = tots.to_s.size
+  fill = " " * wide
+  line = "=" * name.size
+
+  puts "\n#{fill} #{name}\n#{fill} #{line}\n"
+  data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
+  puts "#{fill} -----\n"
+  puts "%*d shown (top %d)" % [wide, seen, rows] if     show && rows > 1
+  puts "%*d total (all %d)" % [wide, tots, uniq] if     uniq > 1
+  puts "%*d total"          % [wide, tots      ] unless uniq > 1
+end
+
+# ==[ Options ]==
 
 OptionParser.new.instance_eval do
   @version = "1.4.0"
@@ -62,30 +89,8 @@ else
   tabl ||= ARGV.shift or abort "no table given"
 end
 
-# ==[ Helpers ]==
 
-class Extralite::Database
-  alias_method :sql, :query_ary
 
-  def sql!(stmt, *args, **opts, &block)
-    puts "\n==[ SQL statement ]==\n\n", stmt.strip, ";"
-    sql(stmt, *args, **opts, &block)
-  end
-end
-
-def display(name, data, show, uniq, tots)
-  seen = data.inject(0) {|seen, coun| seen += coun[0] }
-  rows = [data.size, seen].min
-  wide = tots.to_s.size
-  fill = " " * wide
-  line = "=" * name.size
-
-  puts "\n#{fill} #{name}\n#{fill} #{line}\n"
-  data.each {|cnt, val| puts "%*d %s" % [wide, cnt, val || "NULL"] }
-  puts "#{fill} -----\n"
-  puts "%*d shown (top %d)" % [wide, seen, rows] if     show && rows > 1
-  puts "%*d total (all %d)" % [wide, tots, uniq] if     uniq > 1
-  puts "%*d total"          % [wide, tots      ] unless uniq > 1
 end
 
 # ==[ Let 'er rip! ]==
