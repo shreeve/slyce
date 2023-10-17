@@ -59,7 +59,7 @@ OptionParser.new.instance_eval do
   on "-c", "--columns"                , "Display column names and quit"
   on "-d", "--delete"                 , "Delete the .slyce database first"
   on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
-  on "-H", "--no-headers"             , "Do not show headers when exporting delimited files"
+  on "-H", "--headerless"             , "Do not show headers when exporting delimited files"
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-r", "--regexp <path>"          , "Path to the sqlean/regexp extension"
   on "-s", "--show <count>"           , "Show this many values", Integer
@@ -78,15 +78,15 @@ xpsv = opts[:psv]
 xtsv = opts[:tsv]
 xprt = xcsv || xpsv || xtsv and require "censive"
 
-asky = opts[:ascii       ] and require "any_ascii"
-nuke = opts[:delete      ]
-want = opts[:extract     ].to_s.downcase.split(",")
-keep = opts[:keep        ]
-natu = opts[:natural     ]
-regx = opts[:regexp      ] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"].first
-show = opts[:show        ]
-hide = opts[:"no-headers"]
-filt = opts[:where       ] and filt = "\nwhere\n  #{filt}"
+asky = opts[:ascii     ] and require "any_ascii"
+nuke = opts[:delete    ]
+want = opts[:extract   ].to_s.downcase.split(",")
+keep = opts[:keep      ]
+natu = opts[:natural   ]
+regx = opts[:regexp    ] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"].first
+show = opts[:show      ]
+hide = opts[:headerless]
+filt = opts[:where     ] and filt = "\nwhere\n  #{filt}"
 
 # ensure regexp extension is available
 regx && File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{regx}'" : ''}"
