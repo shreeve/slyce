@@ -57,7 +57,7 @@ OptionParser.new.instance_eval do
   on "-s", "--show <count>"           , "Show this many values", Integer
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
-  on "-x", "--extract <col1,col2,...>", "Comma separated list of columns to extract"
+  on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns to extract"
 
   self
 end.parse!(into: opts={}) rescue abort($!.message)
