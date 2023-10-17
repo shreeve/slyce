@@ -46,6 +46,9 @@ regx = opts[:regexp  ] || Dir["{.,sqlean,#{ENV['HOME']}}/regexp.{dll,dylib,so}"]
 show = opts[:show    ]
 filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
 
+# ensure regexp extension is available
+regx && File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{regx}'" : ''}"
+
 # eager deletion of prior .slyce database
 nuke and `rm -f .slyce`
 
@@ -58,8 +61,6 @@ if dbas =~ /\.csv$/
 else
   tabl ||= ARGV.shift or abort "no table given"
 end
-
-regx && File.exist?(regx) or abort "no regexp extension found#{regx ? " at '#{regx}'" : ''}"
 
 # ==[ Helpers ]==
 
