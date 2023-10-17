@@ -45,7 +45,7 @@ end
 # ==[ Options ]==
 
 OptionParser.new.instance_eval do
-  @version = "1.4.0"
+  @version = "1.5.0"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on "-c", "--columns"                , "Display column names and quit"

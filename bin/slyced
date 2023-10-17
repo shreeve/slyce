@@ -7,46 +7,6 @@ require "optparse"
 
 trap("INT" ) { abort "\n" }
 
-dbas = nil
-tabl = nil
-
-OptionParser.new.instance_eval do
-  @version = "1.4.0"
-  @banner  = "usage: #{program_name} [options] <database> <table>"
-
-  on       "--csv"                    , "Output comma separated values"
-  on       "--psv"                    , "Output pipe separated values"
-  on       "--tsv"                    , "Output tab separated values"
-  on "-a", "--ascii"                  , "Convert data to ASCII using AnyAscii"
-  on "-c", "--columns"                , "Display column names and quit"
-  on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
-  on "-n", "--natural"                , "Sort naturally, not numerically"
-  on "-r", "--rows <count>"           , "Rows of data to show", Integer
-  on "-s", "--suppress"               , "Suppress header when exporting delimited files"
-  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
-  on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
-  on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns to extract"
-
-  self
-end.parse!(into: opts={}) rescue abort($!.message)
-
-xcsv = opts[:csv]
-xpsv = opts[:psv]
-xtsv = opts[:tsv]
-xprt = xcsv || xpsv || xtsv and require "censive"
-
-asky = opts[:ascii   ] and require "any_ascii"
-want = opts[:extract].to_s.downcase.split(",")
-natu = opts[:natural ]
-show = opts[:rows    ]
-hide = opts[:suppress]
-filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
-
-dbas ||= ARGV.shift or abort "no database given"
-tabl ||= ARGV.shift or abort "no table given"
-
-[xcsv, xpsv, xtsv].compact.size > 1 and abort "only one of csv, psv, or tsv allowed"
-
 # ==[ Helpers ]==
 
 DuckDB::Result.use_chunk_each = true
@@ -74,6 +34,48 @@ def display(name, data, show, uniq, tots)
   puts "%*d total (all %d)" % [wide, tots, uniq] if     uniq > 1
   puts "%*d total"          % [wide, tots      ] unless uniq > 1
 end
+
+# ==[ Options ]==
+
+OptionParser.new.instance_eval do
+  @version = "1.5.0"
+  @banner  = "usage: #{program_name} [options] <database> <table>"
+
+  on       "--csv"                    , "Output comma separated values"
+  on       "--psv"                    , "Output pipe separated values"
+  on       "--tsv"                    , "Output tab separated values"
+  on "-a", "--ascii"                  , "Convert data to ASCII using AnyAscii"
+  on "-c", "--columns"                , "Display column names and quit"
+  on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
+  on "-n", "--natural"                , "Sort naturally, not numerically"
+  on "-r", "--rows <count>"           , "Rows of data to show", Integer
+  on "-s", "--suppress"               , "Suppress header when exporting delimited files"
+  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
+  on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
+  on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns to extract"
+
+  self
+end.parse!(into: opts={}) rescue abort($!.message)
+
+dbas = nil
+tabl = nil
+
+xcsv = opts[:csv]
+xpsv = opts[:psv]
+xtsv = opts[:tsv]
+xprt = xcsv || xpsv || xtsv and require "censive"
+
+asky = opts[:ascii   ] and require "any_ascii"
+want = opts[:extract].to_s.downcase.split(",")
+natu = opts[:natural ]
+show = opts[:rows    ]
+hide = opts[:suppress]
+filt = opts[:where   ] and filt = "\nwhere\n  #{filt}"
+
+dbas ||= ARGV.shift or abort "no database given"
+tabl ||= ARGV.shift or abort "no table given"
+
+[xcsv, xpsv, xtsv].compact.size > 1 and abort "only one of csv, psv, or tsv allowed"
 
 # ==[ Let 'er rip! ]==
 
