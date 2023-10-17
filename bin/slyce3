@@ -16,8 +16,6 @@ require "optparse"
 
 trap("INT" ) { abort "\n" }
 
-dbas = nil
-tabl = nil
 
 OptionParser.new.instance_eval do
   @version = "1.4.0"
@@ -36,6 +34,9 @@ OptionParser.new.instance_eval do
 
   self
 end.parse!(into: opts={}) rescue abort($!.message)
+
+dbas = nil
+tabl = nil
 
 nuke = opts[:delete  ]
 want = opts[:extract ].to_s.downcase.split(",")
