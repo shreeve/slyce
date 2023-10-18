@@ -49,7 +49,7 @@ end
 # ==[ Options ]==
 
 OptionParser.new.instance_eval do
-  @version = "1.5.1"
+  @version = "1.5.2"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"                    , "Output comma separated values"
