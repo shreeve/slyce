@@ -80,7 +80,7 @@ tabl ||= ARGV.shift or abort "no table given"
 # ==[ Let 'er rip! ]==
 
 conn = DuckDB::Database.open(dbas).connect
-resu = conn.query(<<~end)
+resu = conn.sql(<<~end)
   select column_name
   from   information_schema.columns
   where  table_name='#{tabl}'
