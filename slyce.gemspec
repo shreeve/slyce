@@ -5,8 +5,8 @@ Gem::Specification.new do |s|
   s.version     = `grep -m 1 '^\s*@version' bin/slyce | cut -f 2 -d '"'`
   s.author      = "Steve Shreeve"
   s.email       = "steve.shreeve@gmail.com"
-  s.summary     =
-  s.description = "Ruby utility to show data statistics for MySQL databases"
+  s.summary     =  "A " +
+  s.description = "Ruby utility to show statistics for databases or csv files"
   s.homepage    = "https://github.com/shreeve/slyce"
   s.license     = "MIT"
   s.files       = `git ls-files`.split("\n") - %w[.gitignore]
