@@ -144,6 +144,7 @@ if xprt
     csv << want unless hide
     data.each do |row|
       csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.to_s }
+    # csv << row.map {|e| asky ? AnyAscii.transliterate(e.to_s) : e.nil? ? nil : e.to_s }
     end
   end
 
