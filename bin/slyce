@@ -57,14 +57,6 @@ OptionParser.new.instance_eval do
   self
 end.parse!(into: opts={}) rescue abort($!.message)
 
-dbas = nil
-tabl = nil
-
-xcsv = opts[:csv]
-xpsv = opts[:psv]
-xtsv = opts[:tsv]
-xprt = xcsv || xpsv || xtsv and require "censive"
-
 asky = opts[:ascii     ] and require "any_ascii"
 dump = opts[:dump      ]
 want = opts[:extract   ].to_s.downcase.split(",")
@@ -73,10 +65,22 @@ show = opts[:show      ]
 hide = opts[:headerless]
 filt = opts[:where     ] and filt = "\nwhere\n  #{filt}"
 
-dbas ||= ARGV.shift or abort "no database given"
-tabl ||= ARGV.shift or opts[:tables] or !want.empty? or abort "no table given"
+# ==[ Export ]==
+
+xcsv = opts[:csv]
+xpsv = opts[:psv]
+xtsv = opts[:tsv]
+xprt = xcsv || xpsv || xtsv and require "censive"
 
 [xcsv, xpsv, xtsv].compact.size > 1 and abort "only one of csv, psv, or tsv allowed"
+
+# ==[ Source ]==
+
+dbas = nil
+tabl = nil
+
+dbas ||= ARGV.shift or abort "no database given"
+tabl ||= ARGV.shift or opts[:tables] or !want.empty? or abort "no table given"
 
 # ==[ Let 'er rip! ]==
 
