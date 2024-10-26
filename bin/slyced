@@ -39,19 +39,19 @@ OptionParser.new.instance_eval do
   @version = "1.5.2"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
-  on       "--csv"                    , "Output comma separated values"
-  on       "--psv"                    , "Output pipe separated values"
-  on       "--tsv"                    , "Output tab separated values"
-  on "-a", "--ascii"                  , "Convert data to ASCII using AnyAscii"
-  on "-c", "--columns"                , "Display column names and quit"
-  on "-h", "--help"                   , "Show help and command usage" do Kernel.abort to_s; end
-  on "-H", "--headerless"             , "Do not show headers when exporting delimited files"
-  on "-n", "--natural"                , "Sort naturally, not numerically"
-  on "-s", "--show <count>"           , "Show this many values", Integer
-  on "-t", "--tables"                 , "Display table names and quit"
-  on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
-  on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
-  on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns to extract"
+  on       "--csv"               , "Output comma separated values"
+  on       "--psv"               , "Output pipe separated values"
+  on       "--tsv"               , "Output tab separated values"
+  on "-a", "--ascii"             , "Convert data to ASCII using AnyAscii"
+  on "-c", "--columns"           , "Display column names and quit"
+  on "-h", "--help"              , "Show help and command usage" do Kernel.abort to_s; end
+  on "-H", "--headerless"        , "Do not show headers when exporting delimited files"
+  on "-n", "--natural"           , "Sort naturally, not numerically"
+  on "-s", "--show <count>"      , "Show this many values", Integer
+  on "-t", "--tables"            , "Display table names and quit"
+  on "-v", "--version"           , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
+  on "-w", "--where <cond>"      , "Where clause (eg - 'age>50 and state='AZ')"
+  on "-x", "--extract <a,b,c...>", "Comma separated list of columns to extract"
 
   self
 end.parse!(into: opts={}) rescue abort($!.message)
