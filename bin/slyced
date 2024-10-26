@@ -48,6 +48,7 @@ OptionParser.new.instance_eval do
   on "-H", "--headerless"             , "Do not show headers when exporting delimited files"
   on "-n", "--natural"                , "Sort naturally, not numerically"
   on "-s", "--show <count>"           , "Show this many values", Integer
+  on "-t", "--tables"                 , "Display table names and quit"
   on "-v", "--version"                , "Show version number" do Kernel.abort "#{program_name} #{@version}"; end
   on "-w", "--where <cond>"           , "Where clause (eg - 'age>50 and state='AZ')"
   on "-x", "--extract <a,b,c...>"     , "Comma separated list of columns to extract"
@@ -71,9 +72,42 @@ xprt = xcsv || xpsv || xtsv and require "censive"
 
 [xcsv, xpsv, xtsv].compact.size > 1 and abort "only one of csv, psv, or tsv allowed"
 
+# ==[ Source ]==
+
+file = '/dev/stdin'
+dbas = ':memory:'
+tabl = '_memory_'
+
+if ARGV.size == 1
+  if opts[:tables]
+    dbas = ARGV.shift
+  else
+    file = ARGV.shift
+    File.readable?(file) or abort "#{file.inspect} is unreadable"
+  end
+elsif ARGV.size > 1
+  dbas = ARGV.shift
+  tabl = ARGV.shift
+end
+
 # ==[ Let 'er rip! ]==
 
 conn = DuckDB::Database.open(dbas).connect
+
+if dbas && opts[:tables]
+  resu = conn.sql("show tables")
+  tbls = resu.to_a.flatten
+  want = want.empty? ? tbls : want & tbls
+  puts want
+  exit
+end
+
+conn.sql(<<~end) if file rescue exit
+  create temporary table "#{tabl}" as
+  select *
+  from   read_csv("#{file}", all_varchar=true)
+end
+
 resu = conn.sql(<<~end)
   select column_name
   from   information_schema.columns
