@@ -139,8 +139,8 @@ want.each do |name|
 
   uniq, tots = conn.sql(<<~"".rstrip).to_a[0]
     select
-      count(distinct(ifnull("#{name}",0))),
-      count(ifnull("#{name}",0))
+      count(distinct(ifnull("#{name}",''))),
+      count(ifnull("#{name}",''))
     from
       "#{tabl}"
     #{filt}
