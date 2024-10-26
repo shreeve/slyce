@@ -121,8 +121,8 @@ want.each do |name|
   limt = show ? "limit #{show}" : ""
   like = <<~"".gsub(/(.)^/m, '\1  ').rstrip
     if(regexp_matches("#{name}", '^[-+]?((0|([1-9]\\d*)(\\.\\d*)?)|((0|([1-9]\\d*))\\.\\d+))$'),cast("#{name}" as double),null) nulls last,
-    if(regexp_matches("#{name}", '^0\\d*$'),length("#{name}"),null)                                                             nulls last,
-    if(regexp_matches("#{name}", '^\\d+\\D'),length(regexp_extract("#{name}",'^(\\d+)',1)),null)                                nulls last,
+    if(regexp_matches("#{name}", '^0\\d*$'),length("#{name}"),null) nulls last,
+    if(regexp_matches("#{name}", '^\\d+\\D'),length(regexp_extract("#{name}",'^(\\d+)',1)),null) nulls last,
 
   data = conn.sql(<<~"".rstrip).to_a
     select
