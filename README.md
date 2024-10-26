@@ -16,9 +16,10 @@ usage: slyce [options] <database> <table>
     -a, --ascii                      Convert data to ASCII using AnyAscii
     -c, --columns                    Display column names and quit
     -h, --help                       Show help and command usage
+    -H, --headerless                 Do not show headers when exporting delimited files
     -n, --natural                    Sort naturally, not numerically
-    -r, --rows <count>               Rows of data to select
-    -s, --suppress                   Suppress header when exporting delimited files
+    -s, --show <count>               Show this many values
+    -t, --tables                     Display table names and quit
     -v, --version                    Show version number
     -w, --where <cond>               Where clause (eg - 'age>50 and state='AZ')
     -x, --extract <col1,col2,...>    Comma separated list of columns to extract
