@@ -9,8 +9,6 @@ trap("INT" ) { abort "\n" }
 
 # ==[ Helpers ]==
 
-DuckDB::Result.use_chunk_each = true
-
 class DuckDB::Connection
   alias_method :sql, :query
 
