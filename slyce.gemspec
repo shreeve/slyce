@@ -13,6 +13,7 @@ Gem::Specification.new do |gem|
   gem.executables = `cd bin && git ls-files .`.split("\n")
   gem.required_ruby_version = Gem::Requirement.new(">= 3.0") if gem.respond_to? :required_ruby_version=
   gem.add_runtime_dependency "any_ascii", "~> 0.3.2"
+  gem.add_runtime_dependency "bigdecimal", "~> 3.1.0"
   gem.add_runtime_dependency "censive", "~> 1.1.0"
   gem.add_runtime_dependency "duckdb", "~> 1.1.2"
   gem.add_runtime_dependency "extralite-bundle", "~> 2.1"

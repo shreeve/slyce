@@ -2,6 +2,7 @@
 
 STDOUT.sync = true
 
+require "bigdecimal"
 require "duckdb"
 require "optparse"
 
@@ -36,7 +37,7 @@ end
 # ==[ Options ]==
 
 OptionParser.new.instance_eval do
-  @version = "1.6.0"
+  @version = "1.7.0"
   @banner  = "usage: #{program_name} [options] <database> <table>"
 
   on       "--csv"               , "Output comma separated values"
